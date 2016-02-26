@@ -16,14 +16,14 @@ Go to [Travis-Ci](https://travis-ci.org) sign in with your github account
 <img src="http://jindulys.github.io/images/TravisLogin.png" width="310px" height="190px" style="margin: 0 auto; display: block;"/>
 
 Click your account and then find the project you want to turn on, just turn it on.
-<img src="http://jindulys.github.io/images/TurnOnGithubPilot.png" width="310px" height="190px" style="margin: 0 auto; display: block;"/>
+<img src="http://jindulys.github.io/images/TurnOnGithubPilot.png" width="360px" height="70px" style="margin: 0 auto; display: block;"/>
 
 # Step2
 
 Prepare your `.travis.yml` file.
  
           
-     language: objective-c
+     language: objective-cs
      osx_image: xcode7.2
      env:
        global:
@@ -44,4 +44,9 @@ Prepare your `.travis.yml` file.
 # Step3
 
 At this time, probably you will hit an Error on Travis, read the log from Travis, you might know what you should do. Share the `Scheme`.
+
+<img src="http://jindulys.github.io/images/TravisManageScheme.png" width="560px" height="260px" style="margin: 0 auto; display: block;"/>
+
+<img src="http://jindulys.github.io/images/TravisShareScheme.png" width="560px" height="360px" style="margin: 0 auto; display: block;"/>
+
 Pushed your changes.
