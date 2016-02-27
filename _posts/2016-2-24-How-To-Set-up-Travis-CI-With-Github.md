@@ -1,6 +1,7 @@
 ---
 layout: post
 title: How to Setup Travis CI with Github
+comments: true
 ---
 
 Continuous Integration is the process of automatically building and running tests whenever a change is committed.
