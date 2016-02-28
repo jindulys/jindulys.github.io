@@ -143,7 +143,6 @@ recursiveBlock = { repo, owner, page in
             print(users.count)
             self.myTestResult.appendContentsOf(users)
         }
-                    s
         if let vpage = nextPage {
             print("Next page is:\(vpage)")
                 if vpage == "1" {
