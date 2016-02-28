@@ -122,7 +122,41 @@ client.stars.getStargazersFor(repo: "Yep", owner: "CatchChat", page: "1").respon
     }
 })
 ```
+这种思路的确是对的，我们就是想要这种recursive迭代的方式去请求下一个，因为下一个请求依赖前一个的返回。只是这么写显然不可行，重复的代码被一直嵌套，而且你不知道什么时候到头。
 
+## 怎么改写能更加**Swifty** -- Recursive Block here to rescue
+
+Swift里Block本身就是一等公民，我们可以用它做变量，封装一些必要的处理步骤在里面。我们这个场景就特别适合使用block变量的方式，因为一方面我们需要调用`getStargazersFor(repo:,owner:,page:)`来发起网络请求，另一方面，再网络请求返回后我们希望根据情况用得到的返回值来再一次调用同样的网络请求，或者结束整个block的执行。大概的模式是这样的：block调用 -> 网络请求 -> 网络返回 -> block调用 -> ... -> 网络返回 -> 满足终止条件，结束调用。
+
+2014年WWDC大会上有个session叫做**"Advanced Swift"**其中提到一个技术叫做**Memoization**, 这个技术运用了swift functional特性来增强recursive call的效率。而这个高阶特性的实现其事就依赖于recursive block。WWDC的代码片段如下：
+
+<img src="http://jindulys.github.io/images/wwdcrecursiveblock.png" width="610px" height="290px" style="margin: 0 auto; display: block;"/>
+
+这里我们也写一个recursive block来完成上面类型的网络请求。代码如下：
+
+```swift
+var aggregatedresult:[GithubUser] = []
+var recursiveBlock: (String, String, String) -> () = {(_, _, _) in }
+recursiveBlock = { repo, owner, page in
+    client.stars.getStargazersFor(repo: repo, owner: owner, page: page).response({(nextPage, result, error) -> Void in
+        if let users = result {
+            print(users.count)
+            self.myTestResult.appendContentsOf(users)
+        }
+                    
+        if let vpage = nextPage {
+            print("Next page is:\(vpage)")
+                if vpage == "1" {
+                    print("Finished")
+                } else {
+                    recursiveBlock(repo, owner, vpage)
+                }
+        }
+    })    
+}
+
+recursiveBlock("Yep", "CatchChat", "1")
+```
 
 
 
