@@ -1,12 +1,10 @@
 ---
 layout: post
-title: 信号量semaphore的一个小故事
+title: Swift Recursive Block的一个小故事
 comments: true
 ---
 
-Dispatch semaphores是苹果提供的一种控制资源访问的机制。它提供了一种类似开关的机制，根据当前信号量的数量来决定阻塞一个任务，或者让任务继续进行。具体的说明可以参考苹果这个[文档](https://developer.apple.com/library/ios/documentation/General/Conceptual/ConcurrencyProgrammingGuide/OperationQueues/OperationQueues.html#//apple_ref/doc/uid/TP40008091-CH102-SW24)。
-
-本文讲述一个semaphore的实际使用案例，可以让大家通过例子看看怎么使用信号量来控制进度，与其它异步通信相比有什么不同。
+本文讲述一个recursive block的实际使用案例，可以让大家通过例子看看为什么使用recursive block，以及如何用swift式的方式来实现。
 
 # 栗子🌰的背景
 
@@ -87,6 +85,8 @@ public func getStargazersFor(repo repo: String, owner: String, page: String = "1
 }
 ```
 
+# 上栗子🌰
+
 那现在需求来了，如果一个用户不想用这种一页一页请求的方式，他想要一次性取得这个仓库的所有stargazer，咋整呢？作为一个API Wrapper的提供者，你应该隐藏复杂的处理逻辑，尽量提供简单的接口给用户方便他调用。
 
 ## 最原始的解决思路
@@ -132,7 +132,7 @@ Swift里Block本身就是一等公民，我们可以用它做变量，封装一�
 
 <img src="http://jindulys.github.io/images/wwdcrecursiveblock.png" width="610px" height="290px" style="margin: 0 auto; display: block;"/>
 
-这里我们也写一个recursive block来完成上面类型的网络请求。代码如下：
+这里我们也写一个recursive block来完成上面类型的网络请求。对于Github API分页的结果返回，当你请求最后一页的时候，最后一页的下一页`nextpage`为 _"1"_，代码如下：
 
 ```swift
 var aggregatedresult:[GithubUser] = []
@@ -143,7 +143,7 @@ recursiveBlock = { repo, owner, page in
             print(users.count)
             self.myTestResult.appendContentsOf(users)
         }
-                    
+                    s
         if let vpage = nextPage {
             print("Next page is:\(vpage)")
                 if vpage == "1" {
@@ -157,6 +157,40 @@ recursiveBlock = { repo, owner, page in
 
 recursiveBlock("Yep", "CatchChat", "1")
 ```
+然后我们就可以正常的回调了，代码如下：
 
+```swift
+/**
+    Get all the stargazers belong to a owner's repo.
+     
+     - note: This request is time consuming if this repo is a quite popular one. but it will run on a private serial queue and will not block main queue.
+     
+     - parameter repo:              repo's name.
+     - parameter owner:             owner's name.
+     - parameter complitionHandler: callback that call on main thread.
+*/
+public func getAllStargazersFor(repo repo: String, owner: String, complitionHandler:([GithubUser]?, String?)-> Void) {
+    var recursiveStargazers: (String, String, String) -> Void = {_, _, _ in }
+    var retVal: [GithubUser] = []
+    recursiveStargazers = {
+        repo, owner, page in
+        self.getStargazersFor(repo: repo, owner: owner, page: page).response {
+            (nextPage, result, error) -> Void in
+            guard let users = result, vpage = nextPage else {
+                complitionHandler(nil, error?.description ?? "Error,Could not finish this request")
+                return
+            }
 
+            retVal.appendContentsOf(users)
+            if vpage == "1" {
+                complitionHandler(retVal, nil)
+            } else {
+                recursiveStargazers(repo, owner, vpage)
+            }
+        }
+    }
+        
+    recursiveStargazers(repo, owner, "1")
+}
+```
 
