@@ -44,3 +44,47 @@ Dispatch semaphores是苹果提供的一种控制资源访问的机制。它提�
       }
     ] 
 
+我写这个API的时候，就按照API需要信息写了这个Routes函数，传入仓库主人用户名，传入仓库名，然后把page的信息以params的形式传入，代码如下：
+
+
+```swift
+/**
+Users that stars a repo belongs to a user.
+     
+- parameter repo: repo name
+- parameter name: owner
+- parameter page: when user has a lot of repos, pagination will be applied.
+     
+- returns: an RpcRequest, whose response result contains `[GithubUser]`, if pagination is applicable, response result contains `nextpage`.
+*/
+public func getStargazersFor(repo repo: String, owner: String, page: String = "1", defaultResponseQueue: dispatch_queue_t? = nil) -> RpcCustomResponseRequest<UserArraySerializer, StringSerializer, String> {
+    precondition((repo.characters.count != 0 && owner.characters.count != 0), "Invalid Input")
+        
+    let httpResponseHandler:((NSHTTPURLResponse?)->String?)? = { (response: NSHTTPURLResponse?) in
+        if let nonNilResponse = response,
+                link = (nonNilResponse.allHeaderFields["Link"] as? String),
+                sinceRange = link.rangeOfString("page=") {
+                    var retVal = ""
+                    var checkIndex = sinceRange.endIndex
+                    
+                    while checkIndex != link.endIndex {
+                        let character = link.characters[checkIndex]
+                        let characterInt = character.zeroCharacterBasedunicodeScalarCodePoint()
+                        if characterInt>=0 && characterInt<=9 {
+                            retVal += String(character)
+                        } else {
+                            break
+                        }
+                        checkIndex = checkIndex.successor()
+                    }
+                    return retVal
+        }
+        return nil
+    }
+        
+    return RpcCustomResponseRequest(client: self.client, host: "api", route: "/repos/\(owner)/\(repo)/stargazers", method: .GET, params: ["page":page], postParams: nil, postData: nil,customResponseHandler:httpResponseHandler, defaultResponseQueue: defaultResponseQueue, responseSerializer: UserArraySerializer(), errorSerializer: StringSerializer())
+}
+```
+
+
+
