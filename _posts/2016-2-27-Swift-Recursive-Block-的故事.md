@@ -130,7 +130,7 @@ Swift里Block本身就是一等公民，我们可以用它做变量，封装一�
 
 2014年WWDC大会上有个session叫做**"Advanced Swift"**其中提到一个技术叫做**Memoization**, 这个技术运用了swift functional特性来增强recursive call的效率。而这个高阶特性的实现其事就依赖于recursive block。WWDC的代码片段如下：
 
-<img src="http://jindulys.github.io/images/wwdcrecursiveblock.png" width="610px" height="290px" style="margin: 0 auto; display: block;"/>
+<img src="http://jindulys.github.io/images/correctWWDC.png" width="610px" height="290px" style="margin: 0 auto; display: block;"/>
 
 这里我们也写一个recursive block来完成上面类型的网络请求。对于Github API分页的结果返回，当你请求最后一页的时候，最后一页的下一页`nextpage`为 _"1"_，代码如下：
 
