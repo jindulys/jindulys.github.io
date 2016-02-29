@@ -128,7 +128,7 @@ client.stars.getStargazersFor(repo: "Yep", owner: "CatchChat", page: "1").respon
 
 Swift里Block本身就是一等公民，我们可以用它做变量，封装一些必要的处理步骤在里面。我们这个场景就特别适合使用block变量的方式，因为一方面我们需要调用`getStargazersFor(repo:,owner:,page:)`来发起网络请求，另一方面，再网络请求返回后我们希望根据情况用得到的返回值来再一次调用同样的网络请求，或者结束整个block的执行。大概的模式是这样的：block调用 -> 网络请求 -> 网络返回 -> block调用 -> ... -> 网络返回 -> 满足终止条件，结束调用。
 
-2014年WWDC大会上有个session叫做**"Advanced Swift"**其中提到一个技术叫做**Memoization**, 这个技术运用了swift functional特性来增强recursive call的效率。而这个高阶特性的实现其事就依赖于recursive block。WWDC的代码片段如下：
+2014年WWDC大会上有个session叫做**"Advanced Swift"**其中提到一个技术叫做**Memoization**, 这个技术运用了swift functional特性来增强recursive call的效率, 通过在高阶函数内部增加额外的处理逻辑，这里增加了dictionary的cache功能，来达到提升效率的目的。而这个高阶特性的实现其事就依赖于recursive block。WWDC的代码片段如下，注意其中的result变量的使用：
 
 <img src="http://jindulys.github.io/images/correctWWDC.png" width="610px" height="290px" style="margin: 0 auto; display: block;"/>
 
@@ -136,7 +136,10 @@ Swift里Block本身就是一等公民，我们可以用它做变量，封装一�
 
 ```swift
 var aggregatedresult:[GithubUser] = []
+// 1. 初始化一个block变量，并用dummy block赋值.
 var recursiveBlock: (String, String, String) -> () = {(_, _, _) in }
+
+// 2. recursiveBlock的实现，内部调用了自己
 recursiveBlock = { repo, owner, page in
     client.stars.getStargazersFor(repo: repo, owner: owner, page: page).response({(nextPage, result, error) -> Void in
         if let users = result {
@@ -148,6 +151,7 @@ recursiveBlock = { repo, owner, page in
                 if vpage == "1" {
                     print("Finished")
                 } else {
+                    // 3. 调用了自己，因为 `1`有声明这个变量,compiler就可以infer它的信息，所以能调用.
                     recursiveBlock(repo, owner, vpage)
                 }
         }
@@ -156,7 +160,7 @@ recursiveBlock = { repo, owner, page in
 
 recursiveBlock("Yep", "CatchChat", "1")
 ```
-然后我们就可以正常的回调了，代码如下：
+使用recursive block的关键点有两个，第一是你需要声明一个变量var，或是用optional的nil赋初始值，或是不用optional用dummy block来直接赋初始值。第二是把含有调用block自己的逻辑写在block实现代码中。这样我们就可以正常的回调了，代码如下：
 
 ```swift
 /**
