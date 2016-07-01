@@ -4,7 +4,7 @@ title: Swift Tips
 comments: true
 ---
 
-# Lazy Initialization
+## Lazy Initialization
 
 Lazy Initialization is a technique for delaying the creation of an object or some other expensive process until it's needed.
 
